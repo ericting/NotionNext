@@ -2,7 +2,8 @@ import NotionPage from '@/components/NotionPage'
 import Link from 'next/link'
 import TagItemMini from './TagItemMini'
 import TwikooCommentCount from '@/components/TwikooCommentCount'
-import BLOG from '@/blog.config'
+import { siteConfig } from '@/lib/config'
+import { formatDateFmt } from '@/lib/formatDate'
 
 /**
  * 博客列表的文字内容
@@ -14,7 +15,7 @@ export const BlogPostCardInfo = ({ post, showPreview, showPageCover, showSummary
        <div>
          {/* 标题 */}
          <Link
-            href={`${BLOG.SUB_PATH}/${post.slug}`}
+            href={`${siteConfig('SUB_PATH', '')}/${post.slug}`}
             passHref
             className={`line-clamp-2 replace cursor-pointer text-2xl ${showPreview ? 'text-center' : ''
                 } leading-tight font-normal text-gray-600 dark:text-gray-100 hover:text-indigo-700 dark:hover:text-indigo-400`}>
@@ -70,12 +71,12 @@ export const BlogPostCardInfo = ({ post, showPreview, showPageCover, showSummary
          <div className="text-gray-400 justify-between flex">
             {/* 日期 */}
             <Link
-                href={`/archive#${post?.publishTime?.substr(0, 7)}`}
+                href={`/archive#${formatDateFmt(post?.publishDate, 'yyyy-MM')}`}
                 passHref
                 className="font-light menu-link cursor-pointer text-sm leading-4 mr-3">
 
                 <i className="far fa-calendar-alt mr-1" />
-                {post?.publishTime || post.lastEditedTime}
+                {post?.publishDay || post.lastEditedDay}
 
             </Link>
 

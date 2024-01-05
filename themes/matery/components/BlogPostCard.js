@@ -1,19 +1,19 @@
-import BLOG from '@/blog.config'
+import { siteConfig } from '@/lib/config'
 import Link from 'next/link'
-import React from 'react'
 import TagItemMini from './TagItemMini'
 import CONFIG from '../config'
 import TwikooCommentCount from '@/components/TwikooCommentCount'
 import LazyImage from '@/components/LazyImage'
+import { formatDateFmt } from '@/lib/formatDate'
 // import Image from 'next/image'
 
 const BlogPostCard = ({ index, post, showSummary, siteInfo }) => {
-  const showPreview = CONFIG.POST_LIST_PREVIEW && post.blockMap
+  const showPreview = siteConfig('MATERY_POST_LIST_PREVIEW', null, CONFIG) && post.blockMap
   // matery 主题默认强制显示图片
   if (post && !post.pageCoverThumbnail) {
     post.pageCoverThumbnail = siteInfo?.pageCover
   }
-  const showPageCover = CONFIG.POST_LIST_COVER && post?.pageCoverThumbnail
+  const showPageCover = siteConfig('MATERY_POST_LIST_COVER', null, CONFIG) && post?.pageCoverThumbnail
   const delay = (index % 3) * 300
   return (
         <div
@@ -29,7 +29,7 @@ const BlogPostCard = ({ index, post, showSummary, siteInfo }) => {
 
                 {/* 头部图片 填充卡片 */}
                 {showPageCover && (
-                    <Link href={`${BLOG.SUB_PATH}/${post.slug}`} passHref legacyBehavior>
+                    <Link href={`${siteConfig('SUB_PATH', '')}/${post.slug}`} passHref legacyBehavior>
                         <div className="flex flex-grow w-full relative duration-200 = rounded-t-md cursor-pointer transform overflow-hidden">
                             <LazyImage
                                 src={post?.pageCoverThumbnail}
@@ -56,12 +56,12 @@ const BlogPostCard = ({ index, post, showSummary, siteInfo }) => {
                         <div className='text-gray-800 justify-between flex my-2  dark:text-gray-300'>
                             <div>
                                 <Link
-                                    href={`/archive#${post?.publishTime?.substr(0, 7)}`}
+                                    href={`/archive#${formatDateFmt(post?.publishDate, 'yyyy-MM')}`}
                                     passHref
                                     className="font-light hover:underline cursor-pointer text-sm leading-4 mr-3">
 
                                     <i className="far fa-clock mr-1" />
-                                    {post.date?.start_date || post.lastEditedTime}
+                                    {post.date?.start_date || post.lastEditedDay}
 
                                 </Link>
                                 <TwikooCommentCount post={post} className='hover:underline cursor-pointer text-sm'/>

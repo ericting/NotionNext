@@ -1,30 +1,35 @@
 import CONFIG from './config'
-import { BlogListPage } from './components/BlogListPage'
-import { BlogListScroll } from './components/BlogListScroll'
 import { useEffect } from 'react'
-import { isBrowser, loadExternalResource } from '@/lib/utils'
-import BlogArchiveItem from './components/BlogArchiveItem'
-import { ArticleLock } from './components/ArticleLock'
-import NotionPage from '@/components/NotionPage'
-import { ArticleInfo } from './components/ArticleInfo'
-import Comment from '@/components/Comment'
-import ArticleAround from './components/ArticleAround'
-import ShareBar from '@/components/ShareBar'
-import { AdSlot } from '@/components/GoogleAdsense'
-import Link from 'next/link'
-import CommonHead from '@/components/CommonHead'
-import { TopBar } from './components/TopBar'
-import { Header } from './components/Header'
-import { NavBar } from './components/NavBar'
-import BLOG from '@/blog.config'
-import { SideBar } from './components/SideBar'
-import JumpToTopButton from './components/JumpToTopButton'
-import { Footer } from './components/Footer'
+import { isBrowser } from '@/lib/utils'
 import { useGlobal } from '@/lib/global'
-import SearchInput from './components/SearchInput'
+import { AdSlot } from '@/components/GoogleAdsense'
+import { siteConfig } from '@/lib/config'
 import { Transition } from '@headlessui/react'
+import Link from 'next/link'
 import { Style } from './style'
 import replaceSearchResult from '@/components/Mark'
+import dynamic from 'next/dynamic'
+import NotionPage from '@/components/NotionPage'
+// const NotionPage = dynamic(() => import('@/components/NotionPage'), { ssr: false });
+
+// 主题组件
+const BlogListScroll = dynamic(() => import('./components/BlogListScroll'), { ssr: false });
+const BlogArchiveItem = dynamic(() => import('./components/BlogArchiveItem'), { ssr: false });
+const ArticleLock = dynamic(() => import('./components/ArticleLock'), { ssr: false });
+const ArticleInfo = dynamic(() => import('./components/ArticleInfo'), { ssr: false });
+const Comment = dynamic(() => import('@/components/Comment'), { ssr: false });
+const ArticleAround = dynamic(() => import('./components/ArticleAround'), { ssr: false });
+const ShareBar = dynamic(() => import('@/components/ShareBar'), { ssr: false });
+const TopBar = dynamic(() => import('./components/TopBar'), { ssr: false });
+const Header = dynamic(() => import('./components/Header'), { ssr: false });
+const NavBar = dynamic(() => import('./components/NavBar'), { ssr: false });
+const SideBar = dynamic(() => import('./components/SideBar'), { ssr: false });
+const JumpToTopButton = dynamic(() => import('./components/JumpToTopButton'), { ssr: false });
+const Footer = dynamic(() => import('./components/Footer'), { ssr: false });
+const SearchInput = dynamic(() => import('./components/SearchInput'), { ssr: false });
+const CommonHead = dynamic(() => import('@/components/CommonHead'), { ssr: false });
+const WWAds = dynamic(() => import('@/components/WWAds'), { ssr: false });
+const BlogListPage = dynamic(() => import('./components/BlogListPage'), { ssr: false })
 
 /**
  * 基础布局
@@ -33,18 +38,16 @@ import replaceSearchResult from '@/components/Mark'
  * @returns
  */
 const LayoutBase = props => {
-  const { children, meta, slotTop } = props
-  const { onLoading } = useGlobal()
+  const { children, slotTop, meta } = props
+  const { onLoading, fullWidth } = useGlobal()
 
-  if (isBrowser()) {
-    loadExternalResource('/css/theme-simple.css', 'css')
-  }
   return (
         <div id='theme-simple' className='min-h-screen flex flex-col dark:text-gray-300  bg-white dark:bg-black'>
-            <CommonHead meta={meta} />
+            {/* SEO相关 */}
+            <CommonHead meta={meta}/>
             <Style/>
 
-            {CONFIG.TOP_BAR && <TopBar {...props} />}
+            {siteConfig('SIMPLE_TOP_BAR', null, CONFIG) && <TopBar {...props} />}
 
             {/* 顶部LOGO */}
             <Header {...props} />
@@ -53,14 +56,14 @@ const LayoutBase = props => {
             <NavBar {...props} />
 
             {/* 主体 */}
-            <div id='container-wrapper' className={(BLOG.LAYOUT_SIDEBAR_REVERSE ? 'flex-row-reverse' : '') + ' w-full flex-1 flex items-start max-w-9/10 mx-auto pt-12'}>
+            <div id='container-wrapper' className={(JSON.parse(siteConfig('LAYOUT_SIDEBAR_REVERSE')) ? 'flex-row-reverse' : '') + ' w-full flex-1 flex items-start max-w-9/10 mx-auto pt-12'}>
                 <div id='container-inner ' className='w-full flex-grow min-h-fit'>
                     <Transition
                         show={!onLoading}
                         appear={true}
                         enter="transition ease-in-out duration-700 transform order-first"
                         enterFrom="opacity-0 translate-y-16"
-                        enterTo="opacity-100 translate-y-0"
+                        enterTo="opacity-100"
                         leave="transition ease-in-out duration-300 transform"
                         leaveFrom="opacity-100 translate-y-0"
                         leaveTo="opacity-0 -translate-y-16"
@@ -73,9 +76,11 @@ const LayoutBase = props => {
                     <AdSlot type='native' />
                 </div>
 
-                <div id='right-sidebar' className="hidden xl:block flex-none sticky top-8 w-96 border-l dark:border-gray-800 pl-12 border-gray-100">
-                    <SideBar {...props} />
-                </div>
+              {fullWidth
+                ? null
+                : <div id='right-sidebar' className="hidden xl:block flex-none sticky top-8 w-96 border-l dark:border-gray-800 pl-12 border-gray-100">
+              <SideBar {...props} />
+              </div>}
 
             </div>
 
@@ -106,7 +111,7 @@ const LayoutIndex = props => {
 const LayoutPostList = props => {
   return (
         <LayoutBase {...props}>
-            {BLOG.POST_LIST_STYLE === 'page' ? <BlogListPage {...props} /> : <BlogListScroll {...props} />}
+            {siteConfig('POST_LIST_STYLE') === 'page' ? <BlogListPage {...props} /> : <BlogListScroll {...props} />}
         </LayoutBase>
   )
 }
@@ -121,7 +126,7 @@ const LayoutSearch = props => {
   const { keyword } = props
 
   useEffect(() => {
-    if (isBrowser()) {
+    if (isBrowser) {
       replaceSearchResult({
         doms: document.getElementById('posts-wrapper'),
         search: keyword,
@@ -159,19 +164,21 @@ const LayoutArchive = props => {
  */
 const LayoutSlug = props => {
   const { post, lock, validPassword, prev, next } = props
+  const { fullWidth } = useGlobal()
 
   return (
         <LayoutBase {...props}>
 
             {lock && <ArticleLock validPassword={validPassword} />}
 
-            <div id="article-wrapper" className="px-2 xl:max-w-4xl 2xl:max-w-6xl ">
+            <div id="article-wrapper" className={`px-2  ${fullWidth ? '' : 'xl:max-w-4xl 2xl:max-w-6xl'}`}>
 
                 {/* 文章信息 */}
                 <ArticleInfo post={post} />
 
                 {/* 广告嵌入 */}
-                <AdSlot type={'in-article'} />
+                {/* <AdSlot type={'in-article'} /> */}
+                <WWAds orientation="horizontal" className="w-full" />
 
                 {/* Notion文章主体 */}
                 {!lock && <NotionPage post={post} />}
